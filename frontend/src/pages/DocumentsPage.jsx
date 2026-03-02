@@ -41,7 +41,7 @@ export default function DocumentsPage() {
     async (docId) => {
       try {
         await deleteDocument(docId)
-        setDocuments((docs) => docs.filter((d) => d.id !== docId))
+        setDocuments((docs) => docs.filter((d) => d.doc_id !== docId))
       } catch (err) {
         setError(err.message)
       }

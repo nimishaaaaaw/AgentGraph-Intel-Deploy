@@ -10,23 +10,26 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-_REL_PROMPT = """Given the following entities and source text, identify meaningful relationships between the entities.
+_REL_PROMPT = """You are a knowledge graph builder. Given entities and source text, identify relationships between entities.
 
 Entities:
 {entities_json}
 
-Text:
+Source text:
 {text}
 
-For each relationship provide:
-- source: entity name
-- target: entity name
-- relationship: relationship type in UPPER_SNAKE_CASE (e.g. WORKS_AT, PART_OF, CREATED_BY)
-- description: one-sentence description
+IMPORTANT: You MUST respond with ONLY a valid JSON array. No markdown, no code fences, no explanation.
 
-Return ONLY a JSON array. No explanation.
+Each element must have exactly these keys:
+- "source": entity name (must match an entity above exactly)
+- "target": entity name (must match an entity above exactly)  
+- "relationship": type in UPPER_SNAKE_CASE (e.g. IS_A, HAS_SKILL_IN, WORKED_ON, USES, PART_OF)
+- "description": one sentence describing the relationship
 
-JSON:"""
+Example response format:
+[{{"source": "Alice", "target": "Google", "relationship": "WORKS_AT", "description": "Alice works at Google"}}]
+
+Your response (ONLY the JSON array, nothing else):"""
 
 
 class RelationshipBuilder:
@@ -100,8 +103,16 @@ class RelationshipBuilder:
             text=text[:2000],
         )
         raw = llm.generate(prompt)
+        logger.debug("Relationship LLM raw response: %s", raw[:500])
 
-        json_match = re.search(r"\[.*\]", raw, re.DOTALL)
+        # Strip markdown code fences if present
+        cleaned = raw.strip()
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+        cleaned = cleaned.strip()
+
+        # Try to find JSON array
+        json_match = re.search(r"\[.*\]", cleaned, re.DOTALL)
         if not json_match:
             raise ValueError("No JSON array in LLM response")
 

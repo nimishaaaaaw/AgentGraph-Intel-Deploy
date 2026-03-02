@@ -39,7 +39,7 @@ export default function DocumentList({ documents = [], onDelete, loading }) {
     <div className="p-4 space-y-2">
       {documents.map((doc) => (
         <div
-          key={doc.id}
+          key={doc.doc_id}
           className="bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 flex items-center gap-3 group hover:border-slate-600 transition-colors"
         >
           <div className="w-9 h-9 rounded-lg bg-indigo-600/20 flex items-center justify-center flex-shrink-0">
@@ -68,7 +68,7 @@ export default function DocumentList({ documents = [], onDelete, loading }) {
           </div>
 
           <button
-            onClick={() => onDelete?.(doc.id)}
+            onClick={() => onDelete?.(doc.doc_id)}
             className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all p-1"
             aria-label="Delete document"
           >

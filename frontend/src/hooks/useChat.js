@@ -1,41 +1,38 @@
 /**
  * Custom hook for managing chat state and interactions.
  */
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { sendMessage } from '../services/api'
 
-/**
- * @typedef {Object} Message
- * @property {string} id - Unique message ID
- * @property {'user'|'assistant'} role - Message sender
- * @property {string} content - Message text
- * @property {Array} [sources] - Source citations
- * @property {Array} [agent_trail] - Agents involved in response
- * @property {Array} [entities] - Extracted entities
- * @property {number} timestamp - Unix timestamp
- */
+const STORAGE_KEY = 'agentgraph_chat_messages'
+
+function loadMessages() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
 
 export function useChat() {
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState(loadMessages)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+  }, [messages])
 
   const addMessage = useCallback((message) => {
     setMessages((prev) => [...prev, { ...message, id: Date.now().toString(), timestamp: Date.now() }])
   }, [])
 
-  /**
-   * Send a message and receive an AI response.
-   * @param {string} query - User's message
-   */
   const send = useCallback(async (query) => {
     if (!query.trim() || isLoading) return
-
-    // Add user message immediately
     addMessage({ role: 'user', content: query })
     setIsLoading(true)
     setError(null)
-
     try {
       const data = await sendMessage(query)
       addMessage({
@@ -62,6 +59,7 @@ export function useChat() {
   const clearMessages = useCallback(() => {
     setMessages([])
     setError(null)
+    localStorage.removeItem(STORAGE_KEY)
   }, [])
 
   return { messages, isLoading, error, send, clearMessages }

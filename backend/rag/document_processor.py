@@ -127,20 +127,39 @@ class DocumentProcessor:
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _extract_pdf(self, path: str) -> str:
-        """Extract plain text from a PDF file using PyPDF2."""
+    def _extract_pdf(self, file_path: str) -> str:
+        """Extract text from a PDF file."""
+        # Try pdfplumber first (better for modern PDFs)
         try:
-            import PyPDF2  # noqa: PLC0415
+            import pdfplumber
 
-            with open(path, "rb") as fh:
-                reader = PyPDF2.PdfReader(fh)
-                pages = [
-                    page.extract_text() or "" for page in reader.pages
-                ]
-            return "\n\n".join(pages)
+            text_parts = []
+            with pdfplumber.open(file_path) as pdf:
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_parts.append(page_text)
+            if text_parts:
+                return "\n\n".join(text_parts)
+        except ImportError:
+            logger.debug("pdfplumber not available, falling back to PyPDF2")
         except Exception as exc:
-            logger.error("PDF extraction failed for %s: %s", path, exc)
-            raise
+            logger.warning("pdfplumber failed: %s, trying PyPDF2", exc)
+
+        # Fallback to PyPDF2
+        try:
+            from PyPDF2 import PdfReader
+
+            reader = PdfReader(file_path)
+            text_parts = []
+            for page in reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text_parts.append(page_text)
+            return "\n\n".join(text_parts)
+        except Exception as exc:
+            logger.error("PDF extraction failed: %s", exc)
+            return ""
 
     def _split_text(self, text: str) -> List[str]:
         """

@@ -42,7 +42,7 @@ class BaseLLM(ABC):
 class GeminiLLM(BaseLLM):
     """Google Gemini backend using the ``google-generativeai`` SDK."""
 
-    MODEL = "gemini-2.0-flash"
+    MODEL = "gemini-2.5-flash"
 
     def __init__(self, api_key: str) -> None:
         self._api_key = api_key

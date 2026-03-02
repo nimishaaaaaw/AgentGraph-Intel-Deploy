@@ -1,0 +1,4 @@
+﻿My name is Nimisha Majgawali.
+I am a software developer with experience in Node.js, Express, MongoDB, and React.
+I worked on a project called Zenote using web development technologies.
+I have skills in data analysis, programming languages, and encryption.
